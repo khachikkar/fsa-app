@@ -1,54 +1,47 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
-import toast from "react-hot-toast";
+import { Form, Input, Button, Typography, Card, message } from "antd";
 import { useRedirectIfLoggedIn } from "../hooks/useAuthRedirect";
+
+const { Title } = Typography;
 
 export default function Login() {
     const isChecking = useRedirectIfLoggedIn();
     const navigate = useNavigate();
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    if (isChecking) {
-        return <p className="text-center mt-10">🔄 Ստուգում ենք մուտքը...</p>;
-    }
-
-    const handleLogin = async () => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-
+    const onFinish = async (values) => {
+        setLoading(true);
+        const { error } = await supabase.auth.signInWithPassword(values);
         if (error) {
-            toast.error("📛 Սխալ մուտք կամ գաղտնաբառ");
+            message.error("📛 Սխալ email կամ գաղտնաբառ");
         } else {
-            toast.success("✅ Մուտք հաջողվեց");
+            message.success("✅ Մուտքը հաջողվեց");
             setTimeout(() => navigate("/profile"), 1000);
         }
+        setLoading(false);
     };
 
+    if (isChecking) return <p style={{ textAlign: "center" }}>🔄 Ստուգում ենք մուտքը...</p>;
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-blue-600 to-purple-600">
-            <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-                <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">Մուտք գործել</h2>
-                <input
-                    type="email"
-                    placeholder="Email"
-                    className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    onChange={(e) => setEmail(e.target.value)}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                    onClick={handleLogin}
-                    className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
-                >
-                    Մուտք
-                </button>
-            </div>
+        <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5)" }}>
+            <Card style={{ width: 400, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+                <Title level={3} style={{ textAlign: "center", color: "#1677ff" }}>🔐 Մուտք</Title>
+                <Form layout="vertical" onFinish={onFinish}>
+                    <Form.Item name="email" label="Email" rules={[{ required: true, message: "Մուտքագրիր email" }]}>
+                        <Input placeholder="Մուտքագրիր email" />
+                    </Form.Item>
+                    <Form.Item name="password" label="Գաղտնաբառ" rules={[{ required: true, message: "Մուտքագրիր գաղտնաբառ" }]}>
+                        <Input.Password placeholder="Գաղտնաբառ" />
+                    </Form.Item>
+                    <Form.Item>
+                        <Button type="primary" htmlType="submit" block loading={loading}>Մուտք գործել</Button>
+                    </Form.Item>
+                </Form>
+            </Card>
         </div>
     );
 }
