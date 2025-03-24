@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
-import { Form, Input, Button, message, Row, Col, Card, Image, Typography, Spin } from "antd";
+import { Form, Input, Button, message, Row, Col, Card, Image, Typography, Spin, notification } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;
@@ -8,6 +8,7 @@ const { Title } = Typography;
 export default function Admin() {
     const [isAdmin, setIsAdmin] = useState(null); // null = loading
     const [templates, setTemplates] = useState([]);
+    const [form] = Form.useForm();
 
     useEffect(() => {
         const checkAdmin = async () => {
@@ -49,9 +50,16 @@ export default function Admin() {
         ]);
 
         if (error) {
-            message.error("❌ Չհաջողվեց ավելացնել");
+            notification.error({
+                message: "Չհաջողվեց ավելացնել",
+                description: "Խնդրում ենք փորձել նորից։",
+            });
         } else {
-            message.success("✅ Նկարը հաջողությամբ ավելացվեց");
+            notification.success({
+                message: "Նկարը ավելացվեց",
+                description: "Նկարը հաջողությամբ պահպանվել է։",
+            });
+            form.resetFields(); // ⬅️ reset form
             fetchTemplates();
         }
     };
@@ -81,7 +89,7 @@ export default function Admin() {
         <div style={{ padding: "40px" }}>
             <Title level={2}>🛠️ Admin Panel – Նկարների կառավարում</Title>
 
-            <Form layout="vertical" onFinish={onFinish} style={{ maxWidth: 500 }}>
+            <Form form={form}  layout="vertical" onFinish={onFinish} style={{ maxWidth: 500 }}>
                 <Form.Item name="title" label="Վերնագիր" rules={[{ required: true }]}>
                     <Input placeholder="Օր․ Տղա Փարիզում" />
                 </Form.Item>
