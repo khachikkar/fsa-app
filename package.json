@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@gradio/client": "^1.13.1",
+    "@supabase/supabase-js": "^2.49.1",
     "antd": "^5.24.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
