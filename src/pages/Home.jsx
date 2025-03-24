@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import "./Home.css";
 import Explore from "./Explore";
+import Hero from "../components/Hero";
+
+
+
 
 const { Title } = Typography;
 
@@ -47,6 +51,9 @@ export default function Home() {
 
     return (
         <div className="bento-container">
+
+            <Hero />
+
             <Title level={2} style={{ textAlign: "center", marginBottom: 30, color: "#531dab" }}>
                 🖼️ Ընտրիր aesthetic պատկեր swap-ի համար
             </Title>
