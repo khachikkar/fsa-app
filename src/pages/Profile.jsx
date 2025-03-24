@@ -6,7 +6,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { setResults } from "../../results/resultsSlice";
 
 
-
 const { Title, Text } = Typography;
 
 export default function Profile() {
@@ -88,6 +87,31 @@ export default function Profile() {
                                         width="100%"
                                         style={{borderRadius: 10}}
                                     />
+                                    <Button
+                                        type="primary"
+                                        style={{ marginTop: 10 }}
+                                        onClick={async () => {
+                                            try {
+                                                const response = await fetch(res.image_url);
+                                                const blob = await response.blob();
+                                                const blobUrl = window.URL.createObjectURL(blob);
+
+                                                const link = document.createElement("a");
+                                                link.href = blobUrl;
+                                                link.download = "faceswap_.jpg";
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                document.body.removeChild(link);
+                                                window.URL.revokeObjectURL(blobUrl); // Clean up
+                                            } catch (error) {
+                                                console.error("Download failed", error);
+                                            }
+                                        }}
+                                        block
+                                    >
+                                        Ներբեռնել
+                                    </Button>
+
                                     <p style={{marginTop: 8, fontSize: "12px", color: "#999"}}>
                                         {new Date(res.created_at).toLocaleString()}
                                     </p>

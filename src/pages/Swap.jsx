@@ -1,45 +1,43 @@
+// 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
 import { useSearchParams } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Typography, Upload, Button, Image, message, Spin } from "antd";
-import { UploadOutlined, SwapOutlined } from "@ant-design/icons";
+import { UploadOutlined, SwapOutlined, DownloadOutlined } from "@ant-design/icons";
 import { Client } from "@gradio/client";
 import { supabase } from "../../supabaseClient";
-
 import { useDispatch } from "react-redux";
 import { addResult } from "../../results/resultsSlice";
 
-
 const { Title } = Typography;
 
-const templates = [
-    {
-        id: "1",
-        title: "Փարիզյան զգեստով աղջիկ",
-        url: "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=800&q=80",
-    },
-    {
-        id: "2",
-        title: "Տղա փողոցում գիշերով",
-        url: "https://images.unsplash.com/photo-1532074205216-d0e1f4b87368?auto=format&fit=crop&w=800&q=80",
-    },
-    {
-        id: "3",
-        title: "Էսթետիկ տեսարան անապատում",
-        url: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=80",
-    },
-];
-
 export default function Swap() {
-
     const dispatch = useDispatch();
-
     const [searchParams] = useSearchParams();
     const templateId = searchParams.get("template");
 
-    const selectedTemplate = templates.find((tpl) => tpl.id === templateId);
+    const [template, setTemplate] = useState(null);
     const [userImage, setUserImage] = useState(null);
     const [resultUrl, setResultUrl] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    // 🔄 Fetch selected template from Supabase
+    useEffect(() => {
+        const fetchTemplate = async () => {
+            const { data, error } = await supabase
+                .from("templates")
+                .select("*")
+                .eq("id", templateId)
+                .single();
+
+            if (error || !data) {
+                message.error("Template չգտնվեց։");
+            } else {
+                setTemplate(data);
+            }
+        };
+
+        if (templateId) fetchTemplate();
+    }, [templateId]);
 
     const beforeUpload = (file) => {
         setUserImage(file);
@@ -47,7 +45,7 @@ export default function Swap() {
     };
 
     const handleSwap = async () => {
-        if (!userImage || !selectedTemplate) {
+        if (!userImage || !template) {
             message.warning("Վերբեռնի՛ր դեմքի նկար և ընտրիր template");
             return;
         }
@@ -57,10 +55,10 @@ export default function Swap() {
 
         try {
             const client = await Client.connect("andyaii/face-swap-new", {
-                hf_token: "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"
+                hf_token: "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",
             });
 
-            const templateBlob = await fetch(selectedTemplate.url).then((res) => res.blob());
+            const templateBlob = await fetch(template.url).then((res) => res.blob());
 
             const result = await client.predict("/predict", {
                 source_file: userImage,
@@ -70,20 +68,14 @@ export default function Swap() {
 
             if (result?.data?.[0]?.url) {
                 const apiImageUrl = result.data[0].url;
-                // ⬇️ 1․ Get current user
                 const { data: { user } } = await supabase.auth.getUser();
-                if (!user) {
-                    message.error("Մուտք գործիր՝ արդյունքը պահպանելու համար");
-                    return;
-                }
+                if (!user) return;
 
-                // ⬇️ 2․ Download image blob
                 const imgResponse = await fetch(apiImageUrl);
                 const imageBlob = await imgResponse.blob();
-
-                // ⬇️ 3․ Upload to Supabase Storage
                 const filename = `${user.id}_${Date.now()}.jpg`;
-                const { data: storageData, error: uploadError } = await supabase.storage
+
+                const { error: uploadError } = await supabase.storage
                     .from("results")
                     .upload(filename, imageBlob, {
                         contentType: "image/jpeg",
@@ -91,41 +83,27 @@ export default function Swap() {
                     });
 
                 if (uploadError) {
-                    console.error("Storage upload error:", uploadError);
-                    message.error("Չհաջողվեց պատկերը վերբեռնել։");
+                    message.error("Չհաջողվեց վերբեռնել արդյունքը։");
                     return;
                 }
 
-                // ⬇️ 4․ Get public URL & insert into DB
                 const { data: { publicUrl } } = supabase.storage
                     .from("results")
                     .getPublicUrl(filename);
 
-                const { error: dbError } = await supabase
-                    .from("results")
-                    .insert([
-                        {
-                            user_id: user.id,
-                            image_url: publicUrl,
-                        },
-                    ]);
+                await supabase.from("results").insert([
+                    { user_id: user.id, image_url: publicUrl },
+                ]);
 
-                if (dbError) {
-                    console.error("DB insert error:", dbError);
-                    message.error("Չհաջողվեց արդյունքը պահպանել բազայում։");
-                    return;
-                }
-
-                // ✅ 5․ Պահպանված image preview
-                setResultUrl(publicUrl);
                 dispatch(
                     addResult({
                         image_url: publicUrl,
                         created_at: new Date().toISOString(),
                     })
                 );
-                message.success("✅ Արդյունքը պահպանվել է քո պրոֆիլում։");
 
+                setResultUrl(publicUrl);
+                message.success("✅ Արդյունքը պահպանվել է քո պրոֆիլում։");
             } else {
                 message.error("❌ FaceSwap չհաջողվեց։");
             }
@@ -137,52 +115,73 @@ export default function Swap() {
         setLoading(false);
     };
 
+    if (!template) {
+        return (
+            <div style={{ padding: 40 }}>
+                <Title level={3}>🙃 Template ընտրված չէ կամ գոյություն չունի։</Title>
+            </div>
+        );
+    }
+
     return (
-        <div style={{ padding: "40px" }}>
+        <div style={{ padding: 40 }}>
             <Title level={2}>🤖 FaceSwap</Title>
 
-            {selectedTemplate ? (
-                <>
+            <Image
+                src={template.url}
+                alt={template.title}
+                width={300}
+                style={{ borderRadius: 10, marginBottom: 20 }}
+            />
+
+            <Upload beforeUpload={beforeUpload} showUploadList={false} accept="image/*">
+                <Button icon={<UploadOutlined />}>Վերբեռնել դեմքի նկար</Button>
+            </Upload>
+
+            {userImage && (
+                <div style={{ marginTop: 20 }}>
                     <Image
-                        src={selectedTemplate.url}
-                        alt="Template"
-                        width={300}
-                        style={{ borderRadius: 10, marginBottom: 20 }}
+                        src={URL.createObjectURL(userImage)}
+                        alt="User"
+                        width={200}
+                        style={{ borderRadius: 10 }}
                     />
-                    <Upload beforeUpload={beforeUpload} showUploadList={false} accept="image/*">
-                        <Button icon={<UploadOutlined />}>Վերբեռնել դեմքի նկար</Button>
-                    </Upload>
+                </div>
+            )}
 
-                    {userImage && (
-                        <div style={{ marginTop: 20 }}>
-                            <Image
-                                src={URL.createObjectURL(userImage)}
-                                alt="User"
-                                width={200}
-                                style={{ borderRadius: 10 }}
-                            />
-                        </div>
-                    )}
+            <Button
+                type="primary"
+                icon={<SwapOutlined />}
+                onClick={handleSwap}
+                style={{ marginTop: 20 }}
+                loading={loading}
+            >
+                Փոխել դեմքը
+            </Button>
 
+            {resultUrl && (
+                <div style={{ marginTop: 30 }}>
+                    <Title level={4}>Արդյունք</Title>
+                    <Image src={resultUrl} alt="Result" width={300} />
                     <Button
                         type="primary"
-                        icon={<SwapOutlined />}
-                        onClick={handleSwap}
-                        style={{ marginTop: 20 }}
-                        loading={loading}
+                        icon={<DownloadOutlined />}
+                        style={{ marginTop: 10 }}
+                        onClick={async () => {
+                            const response = await fetch(resultUrl);
+                            const blob = await response.blob();
+                            const blobUrl = URL.createObjectURL(blob);
+                            const link = document.createElement("a");
+                            link.href = blobUrl;
+                            link.download = "faceswap_result.jpg";
+                            link.click();
+                            URL.revokeObjectURL(blobUrl);
+                        }}
+                        block
                     >
-                        Փոխել դեմքը
+                        Ներբեռնել
                     </Button>
-
-                    {resultUrl && (
-                        <div style={{ marginTop: 30 }}>
-                            <Title level={4}>Արդյունք</Title>
-                            <Image src={resultUrl} alt="Result" width={300} />
-                        </div>
-                    )}
-                </>
-            ) : (
-                <p>🙃 Template ընտրված չէ։ Վերադարձիր Home էջ։</p>
+                </div>
             )}
         </div>
     );

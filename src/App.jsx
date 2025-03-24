@@ -5,6 +5,7 @@ import Signup from "./pages/Signup";
 import Swap from "./pages/Swap";
 import Profile from "./pages/Profile";
 import "./App.css"
+import Admin from "./pages/Admin.jsx";
 
 function App() {
     return (
@@ -16,6 +17,8 @@ function App() {
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/swap" element={<Swap />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/admin" element={<Admin />} />
+
                 </Routes>
             </div>
         </Router>
