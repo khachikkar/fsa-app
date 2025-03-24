@@ -1,46 +1,52 @@
-.bento-grid {
+.explore-container {
+    padding: 40px;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+.explore-grid {
     column-count: 4;
     column-gap: 20px;
 }
 
 @media (max-width: 1200px) {
-    .bento-grid {
+    .explore-grid {
         column-count: 3;
     }
 }
 
 @media (max-width: 768px) {
-    .bento-grid {
+    .explore-grid {
         column-count: 2;
     }
 }
 
+/* 👇 մոբայլի վրա էլ թողնենք 2 սյուն */
 @media (max-width: 480px) {
-    .bento-grid {
+    .explore-grid {
         column-count: 2;
     }
 }
 
-.bento-item {
+.explore-item {
     break-inside: avoid;
     margin-bottom: 20px;
     transition: transform 0.3s ease;
-    cursor: pointer;
+    cursor: zoom-in;
 }
 
-.bento-item:hover {
+.explore-item:hover {
     transform: scale(1.03);
 }
 
-.bento-item img {
+.explore-item img {
     width: 100%;
     border-radius: 12px;
     display: block;
 }
 
-.bento-title {
-    margin-top: 8px;
-    font-weight: 500;
-    font-size: 14px;
-    color: #333;
+.explore-caption {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #888;
 }

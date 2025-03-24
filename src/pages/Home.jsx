@@ -1,9 +1,9 @@
-import { Card, Row, Col, Typography, Image, Spin } from "antd";
+import {  Typography, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import "./Home.css"; // բենտո ստայլի համար առանձին css
-
+import Explore from "./Explore";
 
 
 const { Title } = Typography;
@@ -35,7 +35,7 @@ export default function Home() {
 
     return (
         <div className="bento-container">
-            <Title level={2} style={{ textAlign: "center", marginBottom: 30, color: "#531dab" }}>
+            <Title level={2} style={{textAlign: "center", marginBottom: 30, color: "#531dab"}}>
                 🖼️ Ընտրիր aesthetic պատկեր swap-ի համար
             </Title>
 
@@ -46,15 +46,13 @@ export default function Home() {
                         className="bento-item"
                         onClick={() => navigate(`/swap?template=${tpl.id}`)}
                     >
-                        <Image
-                            src={tpl.url}
-                            alt={tpl.title}
-                            preview={false}
-                            style={{ borderRadius: "12px", height: "100%", objectFit: "cover" }}
-                        />
+                        <img src={tpl.url} alt={tpl.title}/>
                         <div className="bento-title">{tpl.title}</div>
                     </div>
                 ))}
+            </div>
+            <div style={{marginTop: "60px"}}>
+                <Explore/>
             </div>
         </div>
     );

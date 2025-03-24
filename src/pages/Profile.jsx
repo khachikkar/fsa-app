@@ -1,18 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
-import { Card, Typography, Button, Row, Col, Image } from "antd";
+import { Typography, Button, Image, Spin } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { setResults } from "../../results/resultsSlice";
-
+import "./Profile.css"; // մենք գրելու ենք CSS-ն էլ
 
 const { Title, Text } = Typography;
 
 export default function Profile() {
-
     const dispatch = useDispatch();
     const results = useSelector((state) => state.results.results);
-
     const [user, setUser] = useState(null);
     const navigate = useNavigate();
 
@@ -28,7 +26,7 @@ export default function Profile() {
         getUser();
     }, []);
 
-        useEffect(() => {
+    useEffect(() => {
         const fetchResults = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return;
@@ -39,9 +37,7 @@ export default function Profile() {
                 .eq("user_id", user.id)
                 .order("created_at", { ascending: false });
 
-            if (error) {
-                console.error("🔴 DB fetch error:", error);
-            } else {
+            if (!error) {
                 dispatch(setResults(data));
             }
         };
@@ -54,132 +50,54 @@ export default function Profile() {
         navigate("/login");
     };
 
+    if (!user) return <Spin fullscreen />;
+
     return (
-        <div style={{
-            minHeight: "100vh",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            background: "#f0f2f5"
-        }}>
-            <Card style={{width: 400}}>
-                <Title level={3}>👤 Պրոֆիլ</Title>
-                {user ? (
-                    <>
-                        <Text>📧 {user.email}</Text>
-                        <Button onClick={handleLogout} danger block style={{marginTop: "20px"}}>Դուրս գալ</Button>
-                    </>
+        <div className="profile-container">
+            {/* 👤 Header Section */}
+            <div className="profile-header">
+                <Text className="user-email">📧 {user.email}</Text>
+                <Button onClick={handleLogout} danger type="primary">
+                    Դուրս գալ
+                </Button>
+            </div>
+
+            {/* 🧠 Results */}
+            <div className="results-section">
+                <Title level={3}>🖼️ Քո FaceSwap Արդյունքները</Title>
+
+                {results.length > 0 ? (
+                    <div className="results-grid">
+                        {results.map((res, index) => (
+                            <div key={index} className="result-item">
+                                <img src={res.image_url} alt="result" />
+                                <Button
+                                    type="primary"
+                                    onClick={async () => {
+                                        const response = await fetch(res.image_url);
+                                        const blob = await response.blob();
+                                        const url = URL.createObjectURL(blob);
+                                        const a = document.createElement("a");
+                                        a.href = url;
+                                        a.download = "faceswap_result.jpg";
+                                        a.click();
+                                        URL.revokeObjectURL(url);
+                                    }}
+                                    block
+                                    style={{ marginTop: 10 }}
+                                >
+                                    Ներբեռնել
+                                </Button>
+                                <p className="result-date">
+                                    {new Date(res.created_at).toLocaleString()}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
                 ) : (
-                    <Text>Բեռնվում է...</Text>
+                    <p>Դուք դեռ FaceSwap չեք արել։</p>
                 )}
-            </Card>
-            <div style={{padding: "40px"}}>
-                <Title level={2}>👤 Քո FaceSwap Արդյունքները</Title>
-
-                <Row gutter={[16, 16]}>
-                    {results.length > 0 ? (
-                        results.map((res, index) => (
-                            <Col xs={24} sm={12} md={8} lg={6} key={index}>
-                                <Card hoverable>
-                                    <Image
-                                        src={res.image_url}
-                                        alt="Swap Result"
-                                        width="100%"
-                                        style={{borderRadius: 10}}
-                                    />
-                                    <Button
-                                        type="primary"
-                                        style={{ marginTop: 10 }}
-                                        onClick={async () => {
-                                            try {
-                                                const response = await fetch(res.image_url);
-                                                const blob = await response.blob();
-                                                const blobUrl = window.URL.createObjectURL(blob);
-
-                                                const link = document.createElement("a");
-                                                link.href = blobUrl;
-                                                link.download = "faceswap_.jpg";
-                                                document.body.appendChild(link);
-                                                link.click();
-                                                document.body.removeChild(link);
-                                                window.URL.revokeObjectURL(blobUrl); // Clean up
-                                            } catch (error) {
-                                                console.error("Download failed", error);
-                                            }
-                                        }}
-                                        block
-                                    >
-                                        Ներբեռնել
-                                    </Button>
-
-                                    <p style={{marginTop: 8, fontSize: "12px", color: "#999"}}>
-                                        {new Date(res.created_at).toLocaleString()}
-                                    </p>
-                                </Card>
-                            </Col>
-                        ))
-                    ) : (
-                        <p>Դուք դեռ FaceSwap չեք արել։</p>
-                    )}
-                </Row>
             </div>
         </div>
     );
 }
-
-
-// import { useSelector, useDispatch } from "react-redux";
-// import { useEffect } from "react";
-// import { setResults } from "../../results/resultsSlice";
-// import { supabase } from "../../supabaseClient";
-// import { Row, Col, Card, Image, Typography } from "antd";
-//
-// const { Title } = Typography;
-//
-// export default function Profile() {
-//     const dispatch = useDispatch();
-//     const results = useSelector((state) => state.results.results);
-//
-//     useEffect(() => {
-//         const fetchResults = async () => {
-//             const { data: { user } } = await supabase.auth.getUser();
-//             if (!user) return;
-//
-//             const { data, error } = await supabase
-//                 .from("results")
-//                 .select("*")
-//                 .eq("user_id", user.id)
-//                 .order("created_at", { ascending: false });
-//
-//             if (error) {
-//                 console.error("🔴 DB fetch error:", error);
-//             } else {
-//                 dispatch(setResults(data));
-//             }
-//         };
-//
-//         fetchResults();
-//     }, [dispatch]);
-//
-//     return (
-//         <div style={{ padding: "40px" }}>
-//             <Title level={2}>👤 Քո FaceSwap Արդյունքները</Title>
-//             <Row gutter={[16, 16]}>
-//                 {results.length > 0 ? (
-//                     results.map((res, i) => (
-//                         <Col xs={24} sm={12} md={8} lg={6} key={i}>
-//                             <Card hoverable>
-//                                 <Image src={res.image_url} alt="result" width="100%" />
-//                                 <p style={{ fontSize: 12, color: "#888", marginTop: 8 }}>
-//                                     📅 {new Date(res.created_at).toLocaleString()}
-//                                 </p>
-//                             </Card>
-//                         </Col>
-//                     ))
-//                 ) : (
-//                     <p>Դուք դեռ արդյունք չունեք։ Փորձե՛ք FaceSwap 😉</p>
-//                 )}
-//             </Row>
-//         </div>
-//     );
-// }
