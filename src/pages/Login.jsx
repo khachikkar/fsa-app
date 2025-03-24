@@ -76,6 +76,7 @@ export default function Login() {
         }}>
             <Card style={{ width: 400, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
                 <Title level={3} style={{ textAlign: "center", color: "#1677ff" }}>🔐 Մուտք</Title>
+                <Button type="primary" onClick={() => navigate("/")}>Տեսնել նկարները</Button>
                 <Form layout="vertical" onFinish={onFinish}>
                     <Form.Item name="email" label="Email" rules={[{ required: true, message: "Մուտքագրիր email" }]}>
                         <Input placeholder="Մուտքագրիր email" />

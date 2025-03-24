@@ -47,7 +47,7 @@ export default function Profile() {
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
-        navigate("/login");
+        navigate("/");
     };
 
     if (!user) return <Spin fullscreen />;
