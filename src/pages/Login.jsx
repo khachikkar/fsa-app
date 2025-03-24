@@ -24,7 +24,35 @@ export default function Login() {
 
     const onFinish = async (values) => {
         setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword(values);
+        const { data, error } = await supabase.auth.signInWithPassword(values);
+
+        if (data?.user) {
+            const user = data.user;
+
+            // 🔍 Ստուգում ենք՝ արդյոք user-ը արդեն կա users table-ում
+            const { data: existingUser, error: fetchError } = await supabase
+                .from("users")
+                .select("id")
+                .eq("id", user.id)
+                .single();
+
+            if (!existingUser) {
+                const { error: insertError } = await supabase.from("users").insert([
+                    {
+                        id: user.id,
+                        email: user.email,
+                    },
+                ]);
+
+                if (insertError) {
+                    console.error("❌ User insert error:", insertError);
+                } else {
+                    console.log("✅ User added to users table");
+                }
+            }
+        }
+
+
         if (error) {
             message.error("📛 Սխալ email կամ գաղտնաբառ");
         } else {
@@ -55,6 +83,9 @@ export default function Login() {
                     </Form.Item>
                     <Form.Item>
                         <Button type="primary" htmlType="submit" block loading={loading}>Մուտք գործել</Button>
+                    </Form.Item>
+                    <Form.Item>
+                        <Button type="link" onClick={()=>navigate("/signup")} >Գրանցում</Button>
                     </Form.Item>
                 </Form>
             </Card>

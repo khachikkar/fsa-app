@@ -7,6 +7,8 @@ import { Client } from "@gradio/client";
 import { supabase } from "../../supabaseClient";
 import { useDispatch } from "react-redux";
 import { addResult } from "../../results/resultsSlice";
+import {useNavigate} from "react-router-dom";
+
 
 const { Title } = Typography;
 
@@ -19,6 +21,8 @@ export default function Swap() {
     const [userImage, setUserImage] = useState(null);
     const [resultUrl, setResultUrl] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    const navigate = useNavigate()
 
     // 🔄 Fetch selected template from Supabase
     useEffect(() => {
@@ -126,7 +130,7 @@ export default function Swap() {
     return (
         <div style={{ padding: 40 }}>
             <Title level={2}>🤖 FaceSwap</Title>
-
+            <Button type="primary" onClick={()=>navigate("/profile")} >Տեսնել իմ Պրոֆիլը</Button>
             <Image
                 src={template.url}
                 alt={template.title}

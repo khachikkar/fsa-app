@@ -65,7 +65,7 @@ export default function Profile() {
             {/* 🧠 Results */}
             <div className="results-section">
                 <Title level={3}>🖼️ Քո FaceSwap Արդյունքները</Title>
-
+                <Button type="primary" onClick={()=>navigate("/")} >Փորձել նկարները՜</Button>
                 {results.length > 0 ? (
                     <div className="results-grid">
                         {results.map((res, index) => (

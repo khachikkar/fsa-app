@@ -50,6 +50,9 @@ export default function Login() {
                     <Form.Item>
                         <Button type="primary" htmlType="submit" block loading={loading}>Գրացվել</Button>
                     </Form.Item>
+                    <Form.Item>
+                        <Button type="link" onClick={()=>navigate("/login")}  block loading={loading}>Մուտք</Button>
+                    </Form.Item>
                 </Form>
             </Card>
         </div>
