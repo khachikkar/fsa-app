@@ -1,24 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { Form, Input, Button, Typography, Card, message } from "antd";
 import { useRedirectIfLoggedIn } from "../hooks/useAuthRedirect";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../../features/user/userslice";
-import { useSelector } from "react-redux";
-
 
 const { Title } = Typography;
 
 export default function Login() {
-
     const dispatch = useDispatch();
     const user = useSelector((state) => state.user.user);
-
-
-
     const isChecking = useRedirectIfLoggedIn();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [loading, setLoading] = useState(false);
 
@@ -29,8 +24,8 @@ export default function Login() {
         if (data?.user) {
             const user = data.user;
 
-            // 🔍 Ստուգում ենք՝ արդյոք user-ը արդեն կա users table-ում
-            const { data: existingUser, error: fetchError } = await supabase
+            // ⬇️ Ստուգում ենք՝ կա՞ արդյոք user-ը users աղյուսակում
+            const { data: existingUser } = await supabase
                 .from("users")
                 .select("id")
                 .eq("id", user.id)
@@ -52,7 +47,6 @@ export default function Login() {
             }
         }
 
-
         if (error) {
             message.error("📛 Սխալ email կամ գաղտնաբառ");
         } else {
@@ -60,18 +54,26 @@ export default function Login() {
             const { data: { user } } = await supabase.auth.getUser();
             dispatch(setUser(user));
             console.log("🧠 Redux user state:", user);
-            setTimeout(() => navigate("/profile"), 1000);
-        }
-        setLoading(false);
 
+            // ✅ Redirect logic
+            const params = new URLSearchParams(location.search);
+            const redirectTo = params.get("redirect");
+            setTimeout(() => navigate(redirectTo || "/profile"), 1000);
+        }
+
+        setLoading(false);
     };
 
     if (isChecking) return <p style={{ textAlign: "center" }}>🔄 Ստուգում ենք մուտքը...</p>;
 
-
-
     return (
-        <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5)" }}>
+        <div style={{
+            minHeight: "100vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            background: "linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5)"
+        }}>
             <Card style={{ width: 400, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
                 <Title level={3} style={{ textAlign: "center", color: "#1677ff" }}>🔐 Մուտք</Title>
                 <Form layout="vertical" onFinish={onFinish}>
@@ -85,7 +87,7 @@ export default function Login() {
                         <Button type="primary" htmlType="submit" block loading={loading}>Մուտք գործել</Button>
                     </Form.Item>
                     <Form.Item>
-                        <Button type="link" onClick={()=>navigate("/signup")} >Գրանցում</Button>
+                        <Button type="link" onClick={() => navigate("/signup")}>Գրանցում</Button>
                     </Form.Item>
                 </Form>
             </Card>
