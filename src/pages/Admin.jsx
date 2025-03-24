@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../supabaseClient";
-import { Form, Input, Button, message, Row, Col, Card, Image, Typography, Spin, notification } from "antd";
+import { Form, Input, Button, Row, Col, Card, Image, Typography, Spin, notification } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;
