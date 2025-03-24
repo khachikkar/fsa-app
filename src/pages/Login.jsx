@@ -3,10 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { Form, Input, Button, Typography, Card, message } from "antd";
 import { useRedirectIfLoggedIn } from "../hooks/useAuthRedirect";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../features/user/userslice";
+import { useSelector } from "react-redux";
+
 
 const { Title } = Typography;
 
 export default function Login() {
+
+    const dispatch = useDispatch();
+    const user = useSelector((state) => state.user.user);
+
+
+
     const isChecking = useRedirectIfLoggedIn();
     const navigate = useNavigate();
 
@@ -19,12 +29,18 @@ export default function Login() {
             message.error("📛 Սխալ email կամ գաղտնաբառ");
         } else {
             message.success("✅ Մուտքը հաջողվեց");
+            const { data: { user } } = await supabase.auth.getUser();
+            dispatch(setUser(user));
+            console.log("🧠 Redux user state:", user);
             setTimeout(() => navigate("/profile"), 1000);
         }
         setLoading(false);
+
     };
 
     if (isChecking) return <p style={{ textAlign: "center" }}>🔄 Ստուգում ենք մուտքը...</p>;
+
+
 
     return (
         <div style={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", background: "linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5)" }}>

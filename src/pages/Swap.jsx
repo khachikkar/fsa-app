@@ -3,6 +3,11 @@ import { useState } from "react";
 import { Typography, Upload, Button, Image, message, Spin } from "antd";
 import { UploadOutlined, SwapOutlined } from "@ant-design/icons";
 import { Client } from "@gradio/client";
+import { supabase } from "../../supabaseClient";
+
+import { useDispatch } from "react-redux";
+import { addResult } from "../../results/resultsSlice";
+
 
 const { Title } = Typography;
 
@@ -25,6 +30,9 @@ const templates = [
 ];
 
 export default function Swap() {
+
+    const dispatch = useDispatch();
+
     const [searchParams] = useSearchParams();
     const templateId = searchParams.get("template");
 
@@ -48,7 +56,9 @@ export default function Swap() {
         message.loading("Մշակում ենք...");
 
         try {
-            const client = await Client.connect("andyaii/face-swap-new");
+            const client = await Client.connect("andyaii/face-swap-new", {
+                hf_token: "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"
+            });
 
             const templateBlob = await fetch(selectedTemplate.url).then((res) => res.blob());
 
@@ -59,8 +69,63 @@ export default function Swap() {
             });
 
             if (result?.data?.[0]?.url) {
-                setResultUrl(result.data[0].url);
-                message.success("✅ Հաջողությամբ փոխվեց դեմքը!");
+                const apiImageUrl = result.data[0].url;
+                // ⬇️ 1․ Get current user
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    message.error("Մուտք գործիր՝ արդյունքը պահպանելու համար");
+                    return;
+                }
+
+                // ⬇️ 2․ Download image blob
+                const imgResponse = await fetch(apiImageUrl);
+                const imageBlob = await imgResponse.blob();
+
+                // ⬇️ 3․ Upload to Supabase Storage
+                const filename = `${user.id}_${Date.now()}.jpg`;
+                const { data: storageData, error: uploadError } = await supabase.storage
+                    .from("results")
+                    .upload(filename, imageBlob, {
+                        contentType: "image/jpeg",
+                        upsert: false,
+                    });
+
+                if (uploadError) {
+                    console.error("Storage upload error:", uploadError);
+                    message.error("Չհաջողվեց պատկերը վերբեռնել։");
+                    return;
+                }
+
+                // ⬇️ 4․ Get public URL & insert into DB
+                const { data: { publicUrl } } = supabase.storage
+                    .from("results")
+                    .getPublicUrl(filename);
+
+                const { error: dbError } = await supabase
+                    .from("results")
+                    .insert([
+                        {
+                            user_id: user.id,
+                            image_url: publicUrl,
+                        },
+                    ]);
+
+                if (dbError) {
+                    console.error("DB insert error:", dbError);
+                    message.error("Չհաջողվեց արդյունքը պահպանել բազայում։");
+                    return;
+                }
+
+                // ✅ 5․ Պահպանված image preview
+                setResultUrl(publicUrl);
+                dispatch(
+                    addResult({
+                        image_url: publicUrl,
+                        created_at: new Date().toISOString(),
+                    })
+                );
+                message.success("✅ Արդյունքը պահպանվել է քո պրոֆիլում։");
+
             } else {
                 message.error("❌ FaceSwap չհաջողվեց։");
             }
