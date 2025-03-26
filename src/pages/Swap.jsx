@@ -80,7 +80,7 @@ export default function Swap() {
             const response = await fetch("https://api.segmind.com/v1/faceswap-v2", {
                 method: "POST",
                 headers: {
-                    Authorization: "Bearer SG_03ab8380b879d11c", // 🔁 փոխիր քո իրական API key-ով
+                    Authorization: `Bearer ${import.meta.env.VITE_SEGMIND_API_KEY}`, // 🔁 փոխիր քո իրական API key-ով
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
