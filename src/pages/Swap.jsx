@@ -77,10 +77,9 @@ export default function Swap() {
             const templateBlob = await fetch(template.url).then((res) => res.blob());
             const targetBase64 = await toBase64(templateBlob);
 
-            const response = await fetch("https://api.segmind.com/v1/faceswap-v2", {
+            const response = await fetch("/.netlify/functions/swap", {
                 method: "POST",
                 headers: {
-                    Authorization: `Bearer ${import.meta.env.VITE_SEGMIND_API_KEY}`, // 🔁 փոխիր քո իրական API key-ով
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
@@ -88,9 +87,6 @@ export default function Swap() {
                     target_image: targetBase64,
                 }),
             });
-
-            console.log("API KEY →", import.meta.env.VITE_SEGMIND_API_KEY);
-
 
             const result = await response.json();
             if (result.image) {
