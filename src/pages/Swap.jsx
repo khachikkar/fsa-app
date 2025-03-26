@@ -89,6 +89,9 @@ export default function Swap() {
                 }),
             });
 
+            console.log("API KEY →", import.meta.env.VITE_SEGMIND_API_KEY);
+
+
             const result = await response.json();
             if (result.image) {
                 const finalUrl = `data:image/png;base64,${result.image}`;
